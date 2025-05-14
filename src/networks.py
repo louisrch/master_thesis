@@ -168,3 +168,66 @@ class ValueNetwork(nn.Module):
         x = F.relu(self.linear2(x))
         x = self.linear3(x)
         return x
+    
+
+class ReplayBuffer:
+    def __init__(self, state_dim, action_dim, dvc, max_size=int(1e6)):
+        self.max_size = max_size
+        self.dvc = dvc
+        self.ptr = 0
+        self.size = 0
+
+        self.s = torch.zeros((max_size, state_dim), dtype=torch.float, device=self.dvc)
+        self.a = torch.zeros((max_size, action_dim), dtype=torch.long, device=self.dvc)
+        self.r = torch.zeros((max_size, 1), dtype=torch.float, device=self.dvc)
+        self.s_next = torch.zeros((max_size, state_dim), dtype=torch.float, device=self.dvc)
+        self.dw = torch.zeros((max_size, 1), dtype=torch.bool, device=self.dvc)
+
+    def addAll(self, s_array, a_array, r_array, s_next_array, dw_array):
+        # print(len(s_array), len(a_array), len(r_array), len(s_next_array))
+        begin = self.ptr
+        states = torch.from_numpy(np.stack(s_array, axis=0)).to(self.dvc)
+        actions = torch.tensor(a_array).unsqueeze(-1).to(self.dvc)
+        rewards = r_array.clone().detach().float().to(self.dvc)
+        next_states = torch.from_numpy(np.stack(s_next_array, axis=0)).to(self.dvc)
+        dws = torch.tensor(dw_array).unsqueeze(-1).to(self.dvc)
+
+        if begin + len(a_array) <= self.max_size:
+            slice_idx = slice(begin, begin + len(a_array))
+            self.s[slice_idx] = states
+            self.a[slice_idx] = actions
+            self.r[slice_idx] = rewards
+            self.s_next[slice_idx] = next_states
+            self.dw[slice_idx] = dws
+            self.ptr = (begin + len(a_array)) % self.max_size
+            self.size = min(self.size + len(a_array), self.max_size)
+        else:
+            head = self.max_size - begin
+            tail = (self.ptr + len(a_array)) % self.max_size
+
+            self.s[begin:] = states[:head]
+            self.a[begin:] = actions[:head]
+            self.r[begin:] = rewards[:head]
+            self.s_next[begin:] = next_states[:head]
+            self.dw[begin:] = dws[:head]
+
+            self.s[:tail] = states[head:]
+            self.a[:tail] = actions[head:]
+            self.r[:tail] = rewards[head:]
+            self.s_next[:tail] = next_states[head:]
+            self.dw[:tail] = dws[head:]
+            self.ptr = tail
+
+    def add(self, s, a, r, s_next, dw):
+        self.s[self.ptr] = torch.from_numpy(s).to(self.dvc)
+        self.a[self.ptr] = a
+        self.r[self.ptr] = r
+        self.s_next[self.ptr] = torch.from_numpy(s_next).to(self.dvc)
+        self.dw[self.ptr] = dw
+
+        self.ptr = (self.ptr + 1) % self.max_size
+        self.size = min(self.size + 1, self.max_size)
+
+    def sample(self, batch_size):
+        ind = torch.randint(0, self.size, device=self.dvc, size=(batch_size,))
+        return self.s[ind], self.a[ind], self.r[ind], self.s_next[ind], self.dw[ind]

@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
-from networks import Double_Q_Net, Policy_Net, GaussianPolicy, DeterministicPolicy
+from networks import Double_Q_Net, Policy_Net, GaussianPolicy, DeterministicPolicy, ReplayBuffer
 from utils import hard_update, soft_update
 import os
 
@@ -145,7 +145,7 @@ class SACD_agent:
 
 
 class SAC(object):
-    def __init__(self, num_inputs, action_space, args):
+    def __init__(self, num_inputs : int, action_space_shape : int, args):
 
         self.gamma = args.gamma
         self.tau = args.tau
@@ -157,26 +157,26 @@ class SAC(object):
 
         self.device = torch.device("cuda" if args.cuda else "cpu")
 
-        self.critic = Double_Q_Net(num_inputs, action_space.shape[0], args.hidden_size).to(device=self.device)
+        self.critic = Double_Q_Net(num_inputs, action_space_shape, args.hidden_size).to(device=self.device)
         self.critic_optim = torch.nn.Adam(self.critic.parameters(), lr=args.lr)
 
-        self.critic_target = Double_Q_Net(num_inputs, action_space.shape[0], args.hidden_size).to(self.device)
+        self.critic_target = Double_Q_Net(num_inputs, action_space_shape, args.hidden_size).to(self.device)
         hard_update(self.critic_target, self.critic)
 
         if self.policy_type == "Gaussian":
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
             if self.automatic_entropy_tuning is True:
-                self.target_entropy = -torch.prod(torch.Tensor(action_space.shape).to(self.device)).item()
+                self.target_entropy = -torch.prod(torch.Tensor([action_space_shape]).to(self.device)).item()
                 self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
                 self.alpha_optim = torch.nn.Adam([self.log_alpha], lr=args.lr)
 
-            self.policy = GaussianPolicy(num_inputs, action_space.shape[0], args.hidden_size, action_space).to(self.device)
+            self.policy = GaussianPolicy(num_inputs, action_space_shape, args.hidden_size, action_space_shape).to(self.device)
             self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=args.lr)
 
         else:
             self.alpha = 0
             self.automatic_entropy_tuning = False
-            self.policy = DeterministicPolicy(num_inputs, action_space.shape[0], args.hidden_size, action_space).to(self.device)
+            self.policy = DeterministicPolicy(num_inputs, action_space_shape, args.hidden_size, action_space_shape).to(self.device)
             self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=args.lr)
 
     def select_action(self, state, evaluate=False):
@@ -187,7 +187,7 @@ class SAC(object):
             _, _, action = self.policy.sample(state)
         return action.detach().cpu().numpy()[0]
 
-    def update_parameters(self, memory, batch_size, updates):
+    def update_parameters(self, memory : ReplayBuffer, batch_size : int, updates : int):
         # Sample a batch from memory
         state_batch, action_batch, reward_batch, next_state_batch, mask_batch = memory.sample(batch_size=batch_size)
 
@@ -242,7 +242,7 @@ class SAC(object):
         return qf1_loss.item(), qf2_loss.item(), policy_loss.item(), alpha_loss.item(), alpha_tlogs.item()
 
     # Save model parameters
-    def save_checkpoint(self, env_name, suffix="", ckpt_path=None):
+    def save_checkpoint(self, env_name : str, suffix : str ="", ckpt_path : str = None):
         if not os.path.exists('checkpoints/'):
             os.makedirs('checkpoints/')
         if ckpt_path is None:
@@ -255,7 +255,7 @@ class SAC(object):
                     'policy_optimizer_state_dict': self.policy_optim.state_dict()}, ckpt_path)
 
     # Load model parameters
-    def load_checkpoint(self, ckpt_path, evaluate=False):
+    def load_checkpoint(self, ckpt_path : str, evaluate : bool =False):
         print('Loading models from {}'.format(ckpt_path))
         if ckpt_path is not None:
             checkpoint = torch.load(ckpt_path)
@@ -276,64 +276,3 @@ class SAC(object):
 
 
 
-class ReplayBuffer:
-    def __init__(self, state_dim, action_dim, dvc, max_size=int(1e6)):
-        self.max_size = max_size
-        self.dvc = dvc
-        self.ptr = 0
-        self.size = 0
-
-        self.s = torch.zeros((max_size, state_dim), dtype=torch.float, device=self.dvc)
-        self.a = torch.zeros((max_size, action_dim), dtype=torch.long, device=self.dvc)
-        self.r = torch.zeros((max_size, 1), dtype=torch.float, device=self.dvc)
-        self.s_next = torch.zeros((max_size, state_dim), dtype=torch.float, device=self.dvc)
-        self.dw = torch.zeros((max_size, 1), dtype=torch.bool, device=self.dvc)
-
-    def addAll(self, s_array, a_array, r_array, s_next_array, dw_array):
-        # print(len(s_array), len(a_array), len(r_array), len(s_next_array))
-        begin = self.ptr
-        states = torch.from_numpy(np.stack(s_array, axis=0)).to(self.dvc)
-        actions = torch.tensor(a_array).unsqueeze(-1).to(self.dvc)
-        rewards = r_array.clone().detach().float().to(self.dvc)
-        next_states = torch.from_numpy(np.stack(s_next_array, axis=0)).to(self.dvc)
-        dws = torch.tensor(dw_array).unsqueeze(-1).to(self.dvc)
-
-        if begin + len(a_array) <= self.max_size:
-            slice_idx = slice(begin, begin + len(a_array))
-            self.s[slice_idx] = states
-            self.a[slice_idx] = actions
-            self.r[slice_idx] = rewards
-            self.s_next[slice_idx] = next_states
-            self.dw[slice_idx] = dws
-            self.ptr = (begin + len(a_array)) % self.max_size
-            self.size = min(self.size + len(a_array), self.max_size)
-        else:
-            head = self.max_size - begin
-            tail = (self.ptr + len(a_array)) % self.max_size
-
-            self.s[begin:] = states[:head]
-            self.a[begin:] = actions[:head]
-            self.r[begin:] = rewards[:head]
-            self.s_next[begin:] = next_states[:head]
-            self.dw[begin:] = dws[:head]
-
-            self.s[:tail] = states[head:]
-            self.a[:tail] = actions[head:]
-            self.r[:tail] = rewards[head:]
-            self.s_next[:tail] = next_states[head:]
-            self.dw[:tail] = dws[head:]
-            self.ptr = tail
-
-    def add(self, s, a, r, s_next, dw):
-        self.s[self.ptr] = torch.from_numpy(s).to(self.dvc)
-        self.a[self.ptr] = a
-        self.r[self.ptr] = r
-        self.s_next[self.ptr] = torch.from_numpy(s_next).to(self.dvc)
-        self.dw[self.ptr] = dw
-
-        self.ptr = (self.ptr + 1) % self.max_size
-        self.size = min(self.size + 1, self.max_size)
-
-    def sample(self, batch_size):
-        ind = torch.randint(0, self.size, device=self.dvc, size=(batch_size,))
-        return self.s[ind], self.a[ind], self.r[ind], self.s_next[ind], self.dw[ind]
