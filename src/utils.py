@@ -16,8 +16,60 @@ import argparse
 import metaworld
 import random
 import gymnasium as gym
+from actor import SAC, SACD_agent
 
-
+ACTOR_DICT = {
+	'assembly-v2' : SAC,
+	'basketball-v2':SAC,
+	'bin-picking-v2' : SAC,
+	'box-close-v2' : SAC,
+	'button-press-topdown-v2' : SAC,
+	'button-press-topdown-wall-v2' : SAC,
+	'button-press-v2' : SAC,
+	'button-press-wall-v2' : SAC,
+	'coffee-button-v2' : SAC,
+	'coffee-pull-v2' : SAC,
+	'coffee-push-v2' : SAC, 
+	'dial-turn-v2' : SAC, 
+	'disassemble-v2' : SAC, 
+	'door-close-v2': SAC,
+    'door-lock-v2': SAC,
+    'door-open-v2': SAC,
+    'door-unlock-v2': SAC,
+    'hand-insert-v2': SAC,
+    'drawer-close-v2': SAC,
+    'drawer-open-v2': SAC,
+    'faucet-open-v2': SAC,
+    'faucet-close-v2': SAC,
+    'hammer-v2': SAC,
+    'handle-press-side-v2': SAC,
+    'handle-press-v2': SAC,
+    'handle-pull-side-v2': SAC,
+    'handle-pull-v2': SAC,
+    'lever-pull-v2': SAC,
+    'pick-place-wall-v2': SAC,
+    'pick-out-of-hole-v2': SAC,
+    'pick-place-v2': SAC,
+    'plate-slide-v2': SAC,
+    'plate-slide-side-v2': SAC,
+    'plate-slide-back-v2': SAC,
+    'plate-slide-back-side-v2': SAC,
+    'peg-insert-side-v2': SAC,
+    'peg-unplug-side-v2': SAC,
+    'soccer-v2': SAC,
+    'stick-push-v2': SAC,
+    'stick-pull-v2': SAC,
+    'push-v2': SAC,
+    'push-wall-v2': SAC,
+    'push-back-v2': SAC,
+    'reach-v2': SAC,
+    'reach-wall-v2': SAC,
+    'shelf-place-v2': SAC,
+    'sweep-into-v2': SAC,
+    'sweep-v2': SAC,
+    'window-open-v2': SAC,
+    'window-close-v2': SAC
+}
 
 QUERIES = {
     "CartPole-v1" : "What is in this picture ? The goal of the agent is to keep the pole upright. Is the pole upright in this picture ? If not, edit this picture, while preserving the proportions, such that the pole is upright. If it is already upright, do not do anything." 
@@ -107,15 +159,26 @@ def get_env(env_name):
     return env, eval_env
 
 #TODO get action dimension based on the environment
-def get_action_dim(env_name, env):
-	pass
+def get_action_dim(env):
+    if isinstance(env.action_space, gym.spaces.Box):
+        return env.action_space.shape[0]
+    elif isinstance(env.action_space, gym.spaces.Discrete):
+        return env.action_space.n
+    else:
+        raise NotImplementedError("action space not implemented yet")
+
+
 
 
 #TODO choose action based on the environment
 # continuous action space -> continuous SAC ig
 # discrete action space -> discrete SAC
 def choose_agent(opt, env_name, env):
-	pass
+	if isinstance(env.action_space, gym.spaces.Box):
+		#TODO return agent that has a continuous policy
+		pass
+	elif isinstance(env.action_space, gym.spaces.Discrete):
+		return 
 
 def evaluate_policy(env, agent, turns = 3):
 	total_scores = 0
