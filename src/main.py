@@ -110,7 +110,7 @@ def main():
 
     env.mujoco_renderer = MujocoRenderer(env.model, env.data, DEFAULT_CAMERA_CONFIG, width=400, height=400)
 
-    while total_steps < opt.Max_train_steps:
+    while total_steps < opt.max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
         env_seed += 1
         done = False
