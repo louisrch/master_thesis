@@ -141,7 +141,7 @@ class RewardModel:
         computes the distance between a and b based on the chosen distance metric
         """
         if self.distance_type == "euclidean":
-            return torch.cdist(a, b)
+            return torch._euclidean_dist(a, b)
         elif self.distance_type == "cosine":
             sim = F.cosine_similarity(a, b)
             return (1 - sim) / (1 + sim + 1e-5)
@@ -161,5 +161,9 @@ class RewardModel:
         return images
     
     def get_current_goal_embedding(self):
-        return self.goals[self.index]
+        # 3 if there is only one image
+        if self.goals.ndim == 3:
+            return self.goals
+        else:
+            return self.goals[0]
 
