@@ -104,10 +104,10 @@ def main():
     if opt.Loadmodel:
         agent.load(opt.ModelIdex, opt.env_name)
 
-    total_steps = 0
+    total_steps : int = 0
     s, _ = env.reset(seed=env_seed)
     goal_embedding = reward_model.get_current_goal_embedding()
-
+    print(goal_embedding.size())
     env.mujoco_renderer = MujocoRenderer(env.model, env.data, DEFAULT_CAMERA_CONFIG, width=400, height=400)
 
     while total_steps < opt.max_train_steps:
