@@ -107,7 +107,6 @@ def main():
     goal_embedding = reward_model.get_current_goal_embedding()
 
     env.mujoco_renderer = MujocoRenderer(env.model, env.data, DEFAULT_CAMERA_CONFIG, width=400, height=400)
-    env.set_task(task)
 
     while total_steps < opt.Max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
