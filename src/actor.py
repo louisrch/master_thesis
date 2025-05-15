@@ -159,7 +159,7 @@ class SAC(object):
         self.device = self.dvc
 
         self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(device=self.device)
-        self.critic_optim = torch.nn.Adam(self.critic.parameters(), lr=self.lr)
+        self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
         self.critic_target = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.device)
         hard_update(self.critic_target, self.critic)
@@ -169,16 +169,16 @@ class SAC(object):
             if self.automatic_entropy_tuning is True:
                 self.target_entropy = -torch.prod(torch.Tensor([self.action_dim]).to(self.device)).item()
                 self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
-                self.alpha_optim = torch.nn.Adam([self.log_alpha], lr=self.lr)
+                self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=self.lr)
 
             self.policy = GaussianPolicy(self.state_dim, self.action_dim, self.hid_shape, self.action_dim).to(self.device)
-            self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=self.lr)
+            self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
 
         else:
             self.alpha = 0
             self.automatic_entropy_tuning = False
             self.policy = DeterministicPolicy(self.state_dim, self.action_dim, self.hid_shape, self.action_dim).to(self.device)
-            self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=self.lr)
+            self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
 
     def select_action(self, state, deterministic=False):
         state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
