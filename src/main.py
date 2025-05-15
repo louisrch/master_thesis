@@ -8,6 +8,7 @@ import torch
 import utils
 import threading
 from PIL import Image
+import numpy as np
 
 from embedder import Embedder, RewardModel
 
@@ -41,6 +42,13 @@ opt = parser.parse_args()
 print(opt)
 opt.dvc = "cuda:0" if torch.cuda.is_available() else "cpu"
 
+from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
+DEFAULT_CAMERA_CONFIG = {
+"distance": 1.35,
+"azimuth": 160,
+"elevation": -35.0,
+"lookat": np.array([0, 0.6, -0.05]),
+}
 
 def main():
     # Create Env
@@ -97,6 +105,9 @@ def main():
     states = []
     s, _ = env.reset(seed=env_seed)
     goal_embedding = reward_model.get_current_goal_embedding()
+
+    env.mujoco_renderer = MujocoRenderer(env.model, env.data, DEFAULT_CAMERA_CONFIG, width=400, height=400)
+    env.set_task(task)
 
     while total_steps < opt.Max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
