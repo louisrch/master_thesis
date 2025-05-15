@@ -141,7 +141,7 @@ class RewardModel:
         computes the distance between a and b based on the chosen distance metric
         """
         if self.distance_type == "euclidean":
-            return torch._euclidean_dist(a, b)
+            return torch.cdist(a, b, p=2)
         elif self.distance_type == "cosine":
             sim = F.cosine_similarity(a, b)
             return (1 - sim) / (1 + sim + 1e-5)
