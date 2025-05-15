@@ -150,7 +150,7 @@ class RewardModel:
     def build_goal_list(self, path):
         images = []
         #TODO change hardcoding
-        for p in os.listdir("assets/door-close-v2"):
+        for p in os.listdir("assets/door-close-v2/"):
             print(p)
             if os.path.isfile(p) and path in p:
                 img = np.array(Image.open(p))
