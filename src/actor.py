@@ -171,13 +171,19 @@ class SAC(object):
                 self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
                 self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=self.lr)
 
-            self.policy = GaussianPolicy(self.state_dim, self.action_dim, self.hid_shape, self.action_dim).to(self.device)
+            self.policy = GaussianPolicy(num_inputs=self.state_dim,
+                                        num_actions=self.action_dim, 
+                                        hidden_dim=self.hid_shape
+                                        ).to(self.device)
             self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
 
         else:
             self.alpha = 0
             self.automatic_entropy_tuning = False
-            self.policy = DeterministicPolicy(self.state_dim, self.action_dim, self.hid_shape, self.action_dim).to(self.device)
+            self.policy = DeterministicPolicy(num_inputs=self.state_dim,
+                                                num_actions=self.action_dim,
+                                                hidden_dim=self.hid_shape
+                                                ).to(self.device)
             self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
 
     def select_action(self, state, deterministic=False):
