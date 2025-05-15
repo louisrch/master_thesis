@@ -9,6 +9,7 @@ import utils
 import threading
 from PIL import Image
 import numpy as np
+import actor
 
 from embedder import Embedder, RewardModel
 
@@ -94,7 +95,7 @@ def main():
         os.mkdir('model')
 
     # Create Agent, Embedder and Reward Model
-    agent = utils.choose_agent(opt, opt.env_name, env)
+    agent = actor.choose_agent(opt, opt.env_name, env)
     
     embedder = Embedder(**vars(opt))
 
