@@ -189,7 +189,7 @@ class ReplayBuffer:
         # print(len(s_array), len(a_array), len(r_array), len(s_next_array))
         begin = self.ptr
         states = torch.from_numpy(np.stack(s_array, axis=0)).to(self.dvc)
-        actions = torch.tensor(a_array).unsqueeze(-1).to(self.dvc)
+        actions = torch.tensor(a_array).to(self.dvc)
         rewards = r_array.clone().detach().float().to(self.dvc)
         next_states = torch.from_numpy(np.stack(s_next_array, axis=0)).to(self.dvc)
         dws = torch.tensor(dw_array).unsqueeze(-1).to(self.dvc)
