@@ -342,7 +342,7 @@ ACTOR_DICT = {
 def choose_agent(opt, env_name, env):
 	if isinstance(env.action_space, gym.spaces.Box):
 		#TODO return agent that has a continuous policy
-		return SAC(opt)
+		return SAC(**vars(opt))
 	elif isinstance(env.action_space, gym.spaces.Discrete):
-		return SACD_agent(opt)
+		return SACD_agent(**vars(opt))
 
