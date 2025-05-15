@@ -121,13 +121,14 @@ class RewardModel:
 
     def compute_rewards(
         self,
-        images: torch.Tensor,
+        images: list,
         goal_embedding: torch.Tensor
     ) -> torch.Tensor:
         """
         Computes the associated rewards to each image with respect to the given embedding of the goal state
         """
-        image_embeddings = self.embedding_model.get_image_embedding(images)
+        images_np = np.stack(images, axis=0)
+        image_embeddings = self.embedding_model.get_image_embedding(images_np)
         distance = self.compute_distance(image_embeddings, goal_embedding)
         return torch.exp(-distance)
 
