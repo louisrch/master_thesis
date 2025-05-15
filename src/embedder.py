@@ -143,8 +143,7 @@ class RewardModel:
         print(a.size(), b.size())
         if self.distance_type == "euclidean":
             distance = torch.cdist(a, b, p = 2)
-            print(distance.size())
-            return distance
+            return distance.squeeze(1)
         elif self.distance_type == "cosine":
             sim = F.cosine_similarity(a, b)
             return (1 - sim) / (1 + sim + 1e-5)
