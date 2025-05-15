@@ -117,16 +117,6 @@ def get_action_dim(env):
 
 
 
-#TODO choose action based on the environment
-# continuous action space -> continuous SAC ig
-# discrete action space -> discrete SAC
-def choose_agent(opt, env_name, env):
-	if isinstance(env.action_space, gym.spaces.Box):
-		#TODO return agent that has a continuous policy
-		pass
-	elif isinstance(env.action_space, gym.spaces.Discrete):
-		return 
-
 def evaluate_policy(env, agent, turns = 3):
 	total_scores = 0
 	for j in range(turns):

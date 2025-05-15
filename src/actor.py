@@ -7,6 +7,9 @@ from networks import Double_Q_Net, Policy_Net, GaussianPolicy, DeterministicPoli
 from utils import hard_update, soft_update
 import os
 
+import gymnasium as gym
+
+
 
 class SACD_agent:
     def __init__(self, **kwargs):
@@ -144,22 +147,22 @@ class SACD_agent:
 
 
 class SAC(object):
-    def __init__(self, num_inputs : int, action_space_shape : int, args):
+    def __init__(self, num_inputs : int, action_space_shape : int, **kwargs):
 
-        self.gamma = args.gamma
-        self.tau = args.tau
-        self.alpha = args.alpha
+        self.__dict__.update(kwargs)
 
-        self.policy_type = args.policy
-        self.target_update_interval = args.target_update_interval
-        self.automatic_entropy_tuning = args.automatic_entropy_tuning
 
-        self.device = torch.device("cuda" if args.cuda else "cpu")
+        self.policy_type = self.policy
+        self.target_update_interval = self.target_update_interval
+        self.automatic_entropy_tuning = self.automatic_entropy_tuning
+        self.replay_buffer = ReplayBuffer(self.state_dim, action_space_shape, self.dvc)
+        self.update_count = 0
+        self.device = self.dvc
 
-        self.critic = Double_Q_Net(num_inputs, action_space_shape, args.hidden_size).to(device=self.device)
-        self.critic_optim = torch.nn.Adam(self.critic.parameters(), lr=args.lr)
+        self.critic = Double_Q_Net(num_inputs, action_space_shape, self.hid_shape).to(device=self.device)
+        self.critic_optim = torch.nn.Adam(self.critic.parameters(), lr=self.lr)
 
-        self.critic_target = Double_Q_Net(num_inputs, action_space_shape, args.hidden_size).to(self.device)
+        self.critic_target = Double_Q_Net(num_inputs, action_space_shape, self.hid_shape).to(self.device)
         hard_update(self.critic_target, self.critic)
 
         if self.policy_type == "Gaussian":
@@ -167,16 +170,16 @@ class SAC(object):
             if self.automatic_entropy_tuning is True:
                 self.target_entropy = -torch.prod(torch.Tensor([action_space_shape]).to(self.device)).item()
                 self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
-                self.alpha_optim = torch.nn.Adam([self.log_alpha], lr=args.lr)
+                self.alpha_optim = torch.nn.Adam([self.log_alpha], lr=self.lr)
 
-            self.policy = GaussianPolicy(num_inputs, action_space_shape, args.hidden_size, action_space_shape).to(self.device)
-            self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=args.lr)
+            self.policy = GaussianPolicy(num_inputs, action_space_shape, self.hid_shape, action_space_shape).to(self.device)
+            self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=self.lr)
 
         else:
             self.alpha = 0
             self.automatic_entropy_tuning = False
-            self.policy = DeterministicPolicy(num_inputs, action_space_shape, args.hidden_size, action_space_shape).to(self.device)
-            self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=args.lr)
+            self.policy = DeterministicPolicy(num_inputs, action_space_shape, self.hid_shape, action_space_shape).to(self.device)
+            self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=self.lr)
 
     def select_action(self, state, evaluate=False):
         state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
@@ -185,6 +188,10 @@ class SAC(object):
         else:
             _, _, action = self.policy.sample(state)
         return action.detach().cpu().numpy()[0]
+
+    def train(self):
+        self.update_parameters(self.replay_buffer, self.batch_size, self.update_count)
+        self.update_count += 1
 
     def update_parameters(self, memory : ReplayBuffer, batch_size : int, updates : int):
         # Sample a batch from memory
@@ -328,4 +335,15 @@ ACTOR_DICT = {
     'window-close-v2': SAC
 }
 
+
+
+#TODO choose action based on the environment
+# continuous action space -> continuous SAC ig
+# discrete action space -> discrete SAC
+def choose_agent(opt, env_name, env):
+	if isinstance(env.action_space, gym.spaces.Box):
+		#TODO return agent that has a continuous policy
+		return SAC
+	elif isinstance(env.action_space, gym.spaces.Discrete):
+		return SACD_agent
 

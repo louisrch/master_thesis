@@ -14,15 +14,15 @@ from embedder import Embedder, RewardModel
 
 '''Hyperparameter Setting'''
 parser = argparse.ArgumentParser()
-parser.add_argument('--dvc', type=str, default='cpu', help='running device: cuda or cpu')
-parser.add_argument('--env_name', type=str, default="CartPole-v1", help='CartPole-v1, LunarLander-v2')
+parser.add_argument('--dvc', type=str, default='cuda', help='running device: cuda or cpu')
+parser.add_argument('--env_name', type=str, default="CartPole-v1", help='environment name, default:CartPole-v1')
 parser.add_argument('--write', type=str2bool, default=False, help='Use SummaryWriter to record the training')
 parser.add_argument('--render', type=str2bool, default=True, help='Render in 2D RGB array or human video')
 parser.add_argument('--Loadmodel', type=str2bool, default=False, help='Load pretrained model or Not')
-parser.add_argument('--ModelIdex', type=int, default=50, help='which model to load')
+parser.add_argument('--model_index', type=int, default=50, help='which model to load')
 
 parser.add_argument('--seed', type=int, default=0, help='random seed')
-parser.add_argument('--Max_train_steps', type=int, default=10000, help='Max training steps')
+parser.add_argument('--max_train_steps', type=int, default=10000, help='Max training steps')
 parser.add_argument('--save_interval', type=int, default=1e5, help='Model saving interval, in steps.')
 parser.add_argument('--eval_interval', type=int, default=2e3, help='Model evaluating interval, in steps.')
 parser.add_argument('--random_steps', type=int, default=1e3, help='steps for random policy to explore')
@@ -38,6 +38,11 @@ parser.add_argument('--distance_type', type=str, default="euclidean", help = "di
 parser.add_argument("--mode", type=str, default="image", help="image or text mode")
 parser.add_argument("--dump_every", type=int, default=5, help= "frequency at which to dump rewards in the replaybuffer")
 parser.add_argument("--model", type=str, default = "CLIP", help="embedding model (CLIP, DINOV2)")
+parser.add_argument("--automatic_entropy_tuning", type=bool, default=False, help= "Automatically adjust alpha (default:False)")
+parser.add_argument("--policy", type=str, default="Gaussian", help="Policy type for SAC (Gaussian, Deterministic)")
+parser.add_argument('--tau', type=float, default=0.005, metavar='G', help='target smoothing coefficient(τ) (default: 0.005)')
+
+parser.add_argument('--target_update_interval', type=int, default=1, metavar='N', help='Value target update per no. of updates per step (default: 1)')
 opt = parser.parse_args()
 print(opt)
 opt.dvc = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -99,10 +104,6 @@ def main():
         agent.load(opt.ModelIdex, opt.env_name)
 
     total_steps = 0
-    depictions = []
-    actions = []
-    dws = []
-    states = []
     s, _ = env.reset(seed=env_seed)
     goal_embedding = reward_model.get_current_goal_embedding()
 
