@@ -45,7 +45,6 @@ parser.add_argument('--tau', type=float, default=0.005, metavar='G', help='targe
 
 parser.add_argument('--target_update_interval', type=int, default=1, metavar='N', help='Value target update per no. of updates per step (default: 1)')
 opt = parser.parse_args()
-print(opt)
 opt.dvc = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
@@ -72,6 +71,7 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     print(f"Random Seed: {opt.seed}")
+    print(opt)
     print(
         'Algorithm: SACD',
         ' Env:', opt.env_name,
