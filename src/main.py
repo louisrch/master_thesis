@@ -117,7 +117,7 @@ def main():
         actions = []
         dws = []
         depictions = []
-        rewards = torch.zeros(opt.dump_every)
+        rewards = torch.zeros(opt.dump_every, device = opt.dvc)
         count = 0
 
         # Interaction & training
