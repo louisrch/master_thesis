@@ -151,10 +151,10 @@ class RewardModel:
         images = []
         #TODO change hardcoding
         for p in os.listdir("assets/door-close-v2/"):
-            print(p)
-            if os.path.isfile(p) and path in p:
-                img = np.array(Image.open(p))
-                images.append(img)
+            #print(p)
+            #if os.path.isfile(p) and path in p:
+            img = np.array(Image.open(p))
+            images.append(img)
         # embed images
         images = self.embedding_model.get_image_embedding(np.stack(images, axis=0))
         return images
