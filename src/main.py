@@ -99,7 +99,7 @@ def main():
     
     embedder = Embedder(**vars(opt))
 
-    reward_model = RewardModel(embedder, goal_path=utils.get_goal_path(opt.env_name))
+    reward_model = RewardModel(embedder, goal_path=utils.get_goal_path(opt.env_name), **vars(opt))
 
     if opt.Loadmodel:
         agent.load(opt.ModelIdex, opt.env_name)

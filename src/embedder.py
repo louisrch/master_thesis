@@ -117,7 +117,6 @@ class RewardModel:
         self.embedding_model = embedding_model
         self.goals = self.build_goal_list(goal_path)
         self.__dict__.update(kwargs)
-        print(self.__dict__)
         self.index = 0
 
     def compute_rewards(
