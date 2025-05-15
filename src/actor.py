@@ -181,9 +181,9 @@ class SAC(object):
             self.policy = DeterministicPolicy(num_inputs, action_space_shape, self.hid_shape, action_space_shape).to(self.device)
             self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=self.lr)
 
-    def select_action(self, state, evaluate=False):
+    def select_action(self, state, deterministic=False):
         state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
-        if evaluate is False:
+        if deterministic is False:
             action, _, _ = self.policy.sample(state)
         else:
             _, _, action = self.policy.sample(state)
