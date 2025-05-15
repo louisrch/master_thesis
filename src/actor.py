@@ -147,38 +147,37 @@ class SACD_agent:
 
 
 class SAC(object):
-    def __init__(self, num_inputs : int, action_space_shape : int, **kwargs):
+    def __init__(self, **kwargs):
 
         self.__dict__.update(kwargs)
-
-
+        
         self.policy_type = self.policy
         self.target_update_interval = self.target_update_interval
         self.automatic_entropy_tuning = self.automatic_entropy_tuning
-        self.replay_buffer = ReplayBuffer(self.state_dim, action_space_shape, self.dvc)
+        self.replay_buffer = ReplayBuffer(self.state_dim, self.action_dim, self.dvc)
         self.update_count = 0
         self.device = self.dvc
 
-        self.critic = Double_Q_Net(num_inputs, action_space_shape, self.hid_shape).to(device=self.device)
+        self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(device=self.device)
         self.critic_optim = torch.nn.Adam(self.critic.parameters(), lr=self.lr)
 
-        self.critic_target = Double_Q_Net(num_inputs, action_space_shape, self.hid_shape).to(self.device)
+        self.critic_target = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.device)
         hard_update(self.critic_target, self.critic)
 
         if self.policy_type == "Gaussian":
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
             if self.automatic_entropy_tuning is True:
-                self.target_entropy = -torch.prod(torch.Tensor([action_space_shape]).to(self.device)).item()
+                self.target_entropy = -torch.prod(torch.Tensor([self.action_dim]).to(self.device)).item()
                 self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
                 self.alpha_optim = torch.nn.Adam([self.log_alpha], lr=self.lr)
 
-            self.policy = GaussianPolicy(num_inputs, action_space_shape, self.hid_shape, action_space_shape).to(self.device)
+            self.policy = GaussianPolicy(self.state_dim, self.action_dim, self.hid_shape, self.action_dim).to(self.device)
             self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=self.lr)
 
         else:
             self.alpha = 0
             self.automatic_entropy_tuning = False
-            self.policy = DeterministicPolicy(num_inputs, action_space_shape, self.hid_shape, action_space_shape).to(self.device)
+            self.policy = DeterministicPolicy(self.state_dim, self.action_dim, self.hid_shape, self.action_dim).to(self.device)
             self.policy_optim = torch.nn.Adam(self.policy.parameters(), lr=self.lr)
 
     def select_action(self, state, deterministic=False):
@@ -343,7 +342,7 @@ ACTOR_DICT = {
 def choose_agent(opt, env_name, env):
 	if isinstance(env.action_space, gym.spaces.Box):
 		#TODO return agent that has a continuous policy
-		return SAC
+		return SAC(opt)
 	elif isinstance(env.action_space, gym.spaces.Discrete):
-		return SACD_agent
+		return SACD_agent(opt)
 
