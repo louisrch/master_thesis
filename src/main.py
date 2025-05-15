@@ -47,7 +47,7 @@ def main():
     env, eval_env = utils.get_env(env_name=opt.env_name)
 
     opt.state_dim = env.observation_space.shape[0]
-    opt.action_dim = utils.get_action_dim(opt.env_name, env)
+    opt.action_dim = utils.get_action_dim(env)
     opt.max_e_steps = env._max_episode_steps
 
     # Seed Everything
