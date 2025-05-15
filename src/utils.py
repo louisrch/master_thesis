@@ -235,5 +235,5 @@ def compute_rewards(rgb_imgs, goal, model):
 		return rewards
 
 
-
-
+def get_goal_path(env_name):
+	return "assets/" + env_name + "-goal"

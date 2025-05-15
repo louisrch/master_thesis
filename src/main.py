@@ -57,9 +57,6 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     print(f"Random Seed: {opt.seed}")
-
-
-
     print(
         'Algorithm: SACD',
         ' Env:', opt.env_name,
@@ -87,8 +84,7 @@ def main():
     
     embedder = Embedder(**vars(opt))
 
-    #TODO : goals
-    reward_model = RewardModel(embedder, goals=None)
+    reward_model = RewardModel(embedder, goal_path=utils.get_goal_path(opt.env_name))
 
     if opt.Loadmodel:
         agent.load(opt.ModelIdex, opt.env_name)
@@ -99,6 +95,7 @@ def main():
     dws = []
     states = []
     s, _ = env.reset(seed=env_seed)
+    goal_embedding = reward_model.get_current_goal_embedding()
 
     while total_steps < opt.Max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
@@ -108,12 +105,13 @@ def main():
         actions = []
         dws = []
         depictions = []
+        rewards = []
 
         # Interaction & training
         while not done:
             states.append(s)
             if total_steps % opt.dump_every == 0 and total_steps != 0:
-                rewards = reward_model.compute_rewards(depictions)
+                rewards += reward_model.compute_rewards(depictions, goal_embedding)
                 agent.dump_infos_to_replay_buffer(states, actions, rewards, dws)
                 states = [s]
                 actions = []
@@ -129,6 +127,7 @@ def main():
             done = (dw or tr)
             depictions.append(env.render())
             actions.append(a)
+            rewards.append(r)
             dws.append(dw)
 
             s = s_next

@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 from torch.utils.data import DataLoader
+import os
 
 # Predefined mean and std values for normalization
 DINO_MEAN = [0.485, 0.456, 0.406]
@@ -106,16 +107,17 @@ class RewardModel:
     Reward Model that computes rewards with the help of an embedding model.
     """
     embedding_model : Embedder
-    goals : dict
-    def __init__(self, embedding_model: Embedder, goals, **kwargs):
+    goals : torch.tensor
+    def __init__(self, embedding_model: Embedder, goal_path, **kwargs):
         """
         embedding_model : Embedding model used to project states onto a latent space
         goals : dictionary of the respective embedding of each goal image
         maps environment names to depictions
         """
         self.embedding_model = embedding_model
-        self.goals = goals
+        self.goals = self.build_goal_list(goal_path)
         self.__dict__.update(kwargs)
+        self.index = 0
 
     def compute_rewards(
         self,
@@ -144,3 +146,17 @@ class RewardModel:
             return (1 - sim) / (1 + sim + 1e-5)
         else:
             return torch.cdist(a, b)
+        
+    def build_goal_list(self, path):
+        images = []
+        for p in os.listdir("assets/"):
+            if os.path.isfile(p) and path in p:
+                img = np.array(Image.open(p))
+                images.append(img)
+        # embed images
+        images = self.embedding_model.get_image_embedding(np.stack(images, axis=0))
+        return images
+    
+    def get_current_goal_embedding(self):
+        return self.goals[self.index]
+
