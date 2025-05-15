@@ -83,7 +83,7 @@ def get_text_embedding(tokens, model):
 
 
 def get_env(env_name):
-    all_envs = gym.envs.registry.all()
+    all_envs = gym.envs.registry.keys()
     env_ids = [env_spec.id for env_spec in all_envs]
 
     if env_name in env_ids:
