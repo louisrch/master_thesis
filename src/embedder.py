@@ -140,7 +140,6 @@ class RewardModel:
         """
         computes the distance between a and b based on the chosen distance metric
         """
-        print(a.size(), b.size())
         if self.distance_type == "euclidean":
             return torch._euclidean_dist(a, b)
         elif self.distance_type == "cosine":
