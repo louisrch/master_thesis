@@ -187,10 +187,12 @@ class ReplayBuffer:
 
     def addAll(self, s_array, a_array, r_array, s_next_array, dw_array):
         # print(len(s_array), len(a_array), len(r_array), len(s_next_array))
+        #TODO : fix the squeezing
         begin = self.ptr
         states = torch.from_numpy(np.stack(s_array, axis=0)).to(self.dvc)
         actions = torch.tensor(a_array).to(self.dvc)
-        rewards = r_array.clone().detach().float().to(self.dvc).squeeze(1)
+        rewards = r_array.clone().detach().float().to(self.dvc)
+        print(rewards.size())
         next_states = torch.from_numpy(np.stack(s_next_array, axis=0)).to(self.dvc)
         dws = torch.tensor(dw_array).unsqueeze(-1).to(self.dvc)
 
