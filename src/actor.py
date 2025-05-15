@@ -284,6 +284,17 @@ class SAC(object):
                 self.policy.train()
                 self.critic.train()
                 self.critic_target.train()
+    
+    def dump_infos_to_replay_buffer(self, states, actions, rewards, dws):
+        """
+        states : list of N+1 1xS numpy arrays
+        actions : list of N actions
+        depictions : list of N+1 depiction of states, 224x224x3 numpy arrays
+        dws : list of episode completions
+        """
+        next_states = states[1:]
+        states = states[:-1]
+        self.replay_buffer.addAll(states, actions, rewards, next_states, dws)
 
 
 
