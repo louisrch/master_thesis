@@ -117,7 +117,8 @@ def main():
         actions = []
         dws = []
         depictions = []
-        rewards = []
+        rewards = torch.zeros(opt.dump_every)
+        count = 0
 
         # Interaction & training
         while not done:
@@ -129,6 +130,7 @@ def main():
                 actions = []
                 dws = []
                 depictions = []
+                count = 0
 
             if total_steps < opt.random_steps:
                 a = env.action_space.sample()
@@ -139,8 +141,9 @@ def main():
             done = (dw or tr)
             depictions.append(env.render())
             actions.append(a)
-            rewards.append(r)
+            rewards[count] = r
             dws.append(dw)
+            count += 1
 
             s = s_next
 
