@@ -57,14 +57,16 @@ def build_net(layer_shape, hid_activation, output_activation):
 
 
 class GaussianPolicy(nn.Module):
-    def __init__(self, num_inputs, num_actions, hidden_dim, action_space=None):
+    #TODO correct hidden_dim argument, it should not be a list
+    def __init__(self, num_inputs : int, num_actions : int, hidden_dim : list[int], action_space=None):
         super(GaussianPolicy, self).__init__()
-        print(num_actions, num_inputs, hidden_dim)
-        self.linear1 = nn.Linear(num_inputs, hidden_dim)
-        self.linear2 = nn.Linear(hidden_dim, hidden_dim)
+        # temporary fix by indexing
+        print(num_actions, num_inputs, hidden_dim[0])
+        self.linear1 = nn.Linear(num_inputs, hidden_dim[0])
+        self.linear2 = nn.Linear(hidden_dim[0], hidden_dim[1])
 
-        self.mean_linear = nn.Linear(hidden_dim, num_actions)
-        self.log_std_linear = nn.Linear(hidden_dim, num_actions)
+        self.mean_linear = nn.Linear(hidden_dim[1], num_actions)
+        self.log_std_linear = nn.Linear(hidden_dim[1], num_actions)
 
         self.apply(weights_init_)
 
