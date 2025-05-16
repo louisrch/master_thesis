@@ -222,10 +222,10 @@ class SAC(object):
         # Sample a batch from memory
         state_batch, action_batch, reward_batch, next_state_batch, mask_batch = memory.sample(batch_size=batch_size)
 
-        state_batch = torch.tensor(state_batch, dtype=torch.float32, device=self.dvc)
-        next_state_batch = torch.tensor(next_state_batch, dtype=torch.float32, device = self.dvc)
-        action_batch = torch.tensor(action_batch, dtype = torch.float32, device = self.dvc)
-        reward_batch = torch.tensor(reward_batch, dtype = torch.float32, device = self.dvc).unsqueeze(1)
+        state_batch = torch.tensor(state_batch.clone().detach().requires_grad_(True), dtype=torch.float32, device=self.dvc)
+        next_state_batch = torch.tensor(next_state_batch.clone().detach().requires_grad_(True), dtype=torch.float32, device = self.dvc)
+        action_batch = torch.tensor(action_batch.clone().detach().requires_grad_(True), dtype = torch.float32, device = self.dvc)
+        reward_batch = torch.tensor(reward_batch.clone().detach().requires_grad_(True), dtype = torch.float32, device = self.dvc).unsqueeze(1)
         mask_batch = torch.tensor(mask_batch, dtype=torch.float32, device = self.dvc).unsqueeze(1)
 
         with torch.no_grad():

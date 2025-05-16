@@ -128,6 +128,7 @@ def main():
             states.append(s)
             if total_steps % opt.dump_every == 0 and total_steps != 0:
                 #print(total_steps, rewards.size(), len(depictions))
+                rewards = torch.exp(-rewards) # normalization
                 rewards += reward_model.compute_rewards(depictions, goal_embedding)
                 agent.dump_infos_to_replay_buffer(states, actions, rewards, dws)
                 states = [s]
