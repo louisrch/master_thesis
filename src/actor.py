@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
-from networks import Double_Q_Net, Policy_Net, GaussianPolicy, DeterministicPolicy, ReplayBuffer
+from networks import QNetwork, Policy_Net, GaussianPolicy, DeterministicPolicy, ReplayBuffer
 from utils import hard_update, soft_update
 import os
 
@@ -43,7 +43,7 @@ class SACD_agent:
         self.actor = Policy_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
 
-        self.q_critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
+        self.q_critic = QNetwork(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
         self.q_critic_optimizer = torch.optim.Adam(self.q_critic.parameters(), lr=self.lr)
         self.q_critic_target = copy.deepcopy(self.q_critic)
         for p in self.q_critic_target.parameters():
@@ -178,10 +178,10 @@ class SAC(object):
         self.update_count = 0
         self.device = self.dvc
 
-        self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(device=self.dvc)
+        self.critic = QNetwork(self.state_dim, self.action_dim, self.hid_shape).to(device=self.dvc)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
-        self.critic_target = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
+        self.critic_target = QNetwork(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
         hard_update(self.critic_target, self.critic)
 
         if self.policy_type == "Gaussian":
