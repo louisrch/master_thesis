@@ -56,7 +56,7 @@ class SACD_agent:
                 np.log(self.alpha),
                 dtype=torch.float,
                 requires_grad=True,
-                dvc=self.dvc
+                device = self.dvc
             )
             self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=self.lr)
 
@@ -178,7 +178,7 @@ class SAC(object):
         self.update_count = 0
         self.device = self.dvc
 
-        self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(dvc=self.dvc)
+        self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(device=self.dvc)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
         self.critic_target = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
@@ -188,7 +188,7 @@ class SAC(object):
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
             if self.automatic_entropy_tuning is True:
                 self.target_entropy = -torch.prod(torch.Tensor([self.action_dim]).to(self.dvc)).item()
-                self.log_alpha = torch.zeros(1, requires_grad=True, dvc=self.dvc)
+                self.log_alpha = torch.zeros(1, requires_grad=True, device=self.dvc)
                 self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=self.lr)
 
             self.policy = GaussianPolicy(num_inputs=self.state_dim,
