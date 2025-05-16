@@ -121,7 +121,7 @@ def main():
         count = 0
 
         # Interaction & training
-        while not done:
+        while not done and total_steps % opt.max_e_steps != 0:
             states.append(s)
             if total_steps % opt.dump_every == 0 and total_steps != 0:
                 #print(total_steps, rewards.size(), len(depictions))

@@ -56,7 +56,7 @@ class SACD_agent:
                 np.log(self.alpha),
                 dtype=torch.float,
                 requires_grad=True,
-                device=self.dvc
+                dvc=self.dvc
             )
             self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=self.lr)
 
@@ -178,23 +178,23 @@ class SAC(object):
         self.update_count = 0
         self.device = self.dvc
 
-        self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(device=self.device)
+        self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(dvc=self.dvc)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
-        self.critic_target = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.device)
+        self.critic_target = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
         hard_update(self.critic_target, self.critic)
 
         if self.policy_type == "Gaussian":
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
             if self.automatic_entropy_tuning is True:
-                self.target_entropy = -torch.prod(torch.Tensor([self.action_dim]).to(self.device)).item()
-                self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
+                self.target_entropy = -torch.prod(torch.Tensor([self.action_dim]).to(self.dvc)).item()
+                self.log_alpha = torch.zeros(1, requires_grad=True, dvc=self.dvc)
                 self.alpha_optim = torch.optim.Adam([self.log_alpha], lr=self.lr)
 
             self.policy = GaussianPolicy(num_inputs=self.state_dim,
                                         num_actions=self.action_dim, 
                                         hidden_dim=self.hid_shape
-                                        ).to(self.device)
+                                        ).to(self.dvc)
             self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
 
         else:
@@ -203,11 +203,11 @@ class SAC(object):
             self.policy = DeterministicPolicy(num_inputs=self.state_dim,
                                                 num_actions=self.action_dim,
                                                 hidden_dim=self.hid_shape
-                                                ).to(self.device)
+                                                ).to(self.dvc)
             self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=self.lr)
 
     def select_action(self, state, deterministic=False):
-        state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
+        state = torch.FloatTensor(state).to(self.dvc).unsqueeze(0)
         if deterministic is False:
             action, _, _ = self.policy.sample(state)
         else:
@@ -222,11 +222,11 @@ class SAC(object):
         # Sample a batch from memory
         state_batch, action_batch, reward_batch, next_state_batch, mask_batch = memory.sample(batch_size=batch_size)
 
-        state_batch = torch.FloatTensor(state_batch).to(self.device)
-        next_state_batch = torch.FloatTensor(next_state_batch).to(self.device)
-        action_batch = torch.FloatTensor(action_batch).to(self.device)
-        reward_batch = torch.FloatTensor(reward_batch).to(self.device).unsqueeze(1)
-        mask_batch = torch.FloatTensor(mask_batch).to(self.device).unsqueeze(1)
+        state_batch = torch.FloatTensor(state_batch).to(self.dvc)
+        next_state_batch = torch.FloatTensor(next_state_batch).to(self.dvc)
+        action_batch = torch.FloatTensor(action_batch).to(self.dvc)
+        reward_batch = torch.FloatTensor(reward_batch).to(self.dvc).unsqueeze(1)
+        mask_batch = torch.FloatTensor(mask_batch).to(self.dvc).unsqueeze(1)
 
         with torch.no_grad():
             next_state_action, next_state_log_pi, _ = self.policy.sample(next_state_batch)
@@ -263,7 +263,7 @@ class SAC(object):
             self.alpha = self.log_alpha.exp()
             alpha_tlogs = self.alpha.clone() # For TensorboardX logs
         else:
-            alpha_loss = torch.tensor(0.).to(self.device)
+            alpha_loss = torch.tensor(0.).to(self.dvc)
             alpha_tlogs = torch.tensor(self.alpha) # For TensorboardX logs
 
 
