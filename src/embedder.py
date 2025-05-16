@@ -140,7 +140,6 @@ class RewardModel:
         """
         computes the distance between a and b based on the chosen distance metric
         """
-        print(a.size(), b.size())
         if self.distance_type == "euclidean":
             distance = torch.cdist(a, b, p = 2)
             return distance.squeeze(1)
@@ -154,7 +153,6 @@ class RewardModel:
         images = []
         #TODO change hardcoding
         for p in os.listdir("assets/door-close-v2/"):
-            #print(p)
             #if os.path.isfile(p) and path in p:
             img = np.array(Image.open("assets/door-close-v2/" + p))
             images.append(img)
