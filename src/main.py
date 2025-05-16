@@ -115,14 +115,14 @@ def main():
     actions = []
     dws = []
     depictions = []
+    count = 0
     rewards = torch.empty(opt.dump_every, device = opt.dvc)
-    print("okayyy let's go")
     while total_steps < opt.max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
         env_seed += 1
         done = False
 
-        count = 0
+        print(total_steps)
 
         # Interaction & training
         while not done and total_steps % opt.max_e_steps != 0:
