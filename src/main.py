@@ -96,10 +96,13 @@ def main():
 
     # Create Agent, Embedder and Reward Model
     agent = actor.choose_agent(opt, opt.env_name, env)
+    print("Agent created")
     
     embedder = Embedder(**vars(opt))
+    print("Embedder created")
 
     reward_model = RewardModel(embedder, goal_path=utils.get_goal_path(opt.env_name), **vars(opt))
+    print("Reward model created")
 
     if opt.Loadmodel:
         agent.load(opt.ModelIdex, opt.env_name)
