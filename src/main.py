@@ -116,6 +116,7 @@ def main():
     dws = []
     depictions = []
     rewards = torch.empty(opt.dump_every, device = opt.dvc)
+    print("okayyy let's go")
     while total_steps < opt.max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
         env_seed += 1

@@ -177,15 +177,12 @@ class SAC(object):
         self.replay_buffer = ReplayBuffer(self.state_dim, self.action_dim, self.dvc)
         self.update_count = 0
         self.device = self.dvc
-        print("samenamena")
 
         self.critic = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(device=self.dvc)
         self.critic_optim = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
-        print("hehe")
 
         self.critic_target = Double_Q_Net(self.state_dim, self.action_dim, self.hid_shape).to(self.dvc)
         hard_update(self.critic_target, self.critic)
-        print("waka waka")
 
         if self.policy_type == "Gaussian":
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
