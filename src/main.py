@@ -124,7 +124,7 @@ def main():
 
 
         # Interaction & training
-        while not done and (total_steps % opt.max_e_steps != 0 or total_steps == 0):
+        while not done:
             states.append(s)
             if total_steps % opt.dump_every == 0 and total_steps != 0:
                 #print(total_steps, rewards.size(), len(depictions))
@@ -172,6 +172,8 @@ def main():
                 )
 
             total_steps += 1
+            if total_steps % opt.max_e_steps == 0:
+                break
 
             # Save model periodically
             if total_steps % opt.save_interval == 0:
