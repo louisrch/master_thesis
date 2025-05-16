@@ -141,7 +141,7 @@ def main():
             s_next, r, dw, tr, info = env.step(a)
             done = (dw or tr)
             depictions.append(env.render())
-            len(depictions)
+            print(len(depictions))
             actions.append(a)
             rewards[count] = r
             dws.append(dw)
