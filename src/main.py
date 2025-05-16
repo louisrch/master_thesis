@@ -122,10 +122,9 @@ def main():
         env_seed += 1
         done = False
 
-        print(total_steps)
 
         # Interaction & training
-        while not done and total_steps % opt.max_e_steps != 0:
+        while not done and (total_steps % opt.max_e_steps != 0 or total_steps == 0):
             states.append(s)
             if total_steps % opt.dump_every == 0 and total_steps != 0:
                 #print(total_steps, rewards.size(), len(depictions))
