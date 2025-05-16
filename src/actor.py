@@ -10,6 +10,27 @@ import os
 import gymnasium as gym
 
 
+class Actor:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+        self.replay_buffer = ReplayBuffer(self.state_dim, self.dvc, max_size=int(1e6))
+
+    def save(self):
+        #TODO implement
+        pass
+
+    def load(self):
+        #TODO implement
+        pass
+
+    def dump_infos_into_replay_buffer(self, states, actions, rewards, dws):
+        # assertion that we can extract states - next_states pairs
+        assert len(states) == len(actions) +1
+        next_states = states[1:]
+        states = states[:-1]
+        self.replay_buffer.addAll(states, actions, rewards, next_states, dws)
+
+
 
 class SACD_agent:
     def __init__(self, **kwargs):
