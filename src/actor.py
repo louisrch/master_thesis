@@ -378,9 +378,11 @@ ACTOR_DICT = {
 # continuous action space -> continuous SAC ig
 # discrete action space -> discrete SAC
 def choose_agent(opt, env_name, env):
-	if isinstance(env.action_space, gym.spaces.Box):
-		#TODO return agent that has a continuous policy
-		return SAC(**vars(opt))
-	elif isinstance(env.action_space, gym.spaces.Discrete):
-		return SACD_agent(**vars(opt))
+    if isinstance(env.action_space, gym.spaces.Box):
+        #TODO return agent that has a continuous policy
+        return SAC(**vars(opt))
+    elif isinstance(env.action_space, gym.spaces.Discrete):
+        return SACD_agent(**vars(opt))
+    else:
+        raise NotImplementedError("Actor selection of this kind is not implemented yet")
 

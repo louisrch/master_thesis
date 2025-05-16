@@ -193,7 +193,7 @@ class ReplayBuffer:
         actions = torch.tensor(np.array(a_array)).float().to(self.dvc)
         rewards = r_array.clone().detach().float().to(self.dvc)
         next_states = torch.from_numpy(np.stack(s_next_array, axis=0)).to(self.dvc)
-        dws = torch.tensor(dw_array).unsqueeze(-1).to(self.dvc)
+        dws = torch.tensor(dw_array).to(self.dvc)
 
         if begin + len(a_array) <= self.max_size:
             slice_idx = slice(begin, begin + len(a_array))
