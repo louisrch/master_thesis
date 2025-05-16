@@ -108,23 +108,23 @@ def main():
     s, _ = env.reset(seed=env_seed)
     goal_embedding = reward_model.get_current_goal_embedding().unsqueeze(0)
     env.mujoco_renderer = MujocoRenderer(env.model, env.data, DEFAULT_CAMERA_CONFIG, width=400, height=400)
-
+    states = []
+    actions = []
+    dws = []
+    depictions = []
+    rewards = torch.empty(opt.dump_every, device = opt.dvc)
     while total_steps < opt.max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
         env_seed += 1
         done = False
-        states = []
-        actions = []
-        dws = []
-        depictions = []
-        rewards = torch.zeros(opt.dump_every, device = opt.dvc)
+
         count = 0
 
         # Interaction & training
         while not done:
             states.append(s)
             if total_steps % opt.dump_every == 0 and total_steps != 0:
-                print(total_steps, rewards.size(), len(depictions))
+                #print(total_steps, rewards.size(), len(depictions))
                 rewards += reward_model.compute_rewards(depictions, goal_embedding)
                 agent.dump_infos_to_replay_buffer(states, actions, rewards, dws)
                 states = [s]
@@ -141,7 +141,7 @@ def main():
             s_next, r, dw, tr, info = env.step(a)
             done = (dw or tr)
             depictions.append(env.render())
-            print(len(depictions))
+            #print(len(depictions))
             actions.append(a)
             rewards[count] = r
             dws.append(dw)
