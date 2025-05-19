@@ -116,7 +116,7 @@ def main():
     dws = []
     depictions = []
     count = 0
-    rewards = torch.empty(opt.dump_every, device = opt.dvc)
+    #rewards = torch.empty(opt.dump_every, device = opt.dvc)
     while total_steps < opt.max_train_steps:
         s, info = env.reset(seed=env_seed)  # avoid overfitting seed
         env_seed += 1
@@ -128,8 +128,8 @@ def main():
             states.append(s)
             if total_steps % opt.dump_every == 0 and total_steps != 0:
                 #print(total_steps, rewards.size(), len(depictions))
-                rewards = torch.exp(-rewards) # normalization
-                rewards += reward_model.compute_rewards(depictions, goal_embedding)
+                #rewards = 1 - torch.exp(-rewards) # normalization
+                rewards = reward_model.compute_rewards(depictions, goal_embedding)
                 agent.dump_infos_to_replay_buffer(states, actions, rewards, dws)
                 states = [s]
                 actions = []
@@ -147,7 +147,7 @@ def main():
             depictions.append(env.render())
             #print(len(depictions))
             actions.append(a)
-            rewards[count] = r
+            #rewards[count] = r
             dws.append(dw)
             count += 1
 
