@@ -15,6 +15,10 @@ DINO_STD = [0.229, 0.224, 0.225]
 CLIP_MEAN = [0.48145466, 0.4578275, 0.40821073]
 CLIP_STD = [0.26862954, 0.26130258, 0.27577711]
 
+GOAL_FLAG = "goal"
+
+ASSETS_PATH = "assets/"
+
 class Embedder:
     """
     Embedding model used to project pictures into a latent space
@@ -152,13 +156,15 @@ class RewardModel:
     def build_goal_list(self, path):
         images = []
         #TODO change hardcoding
-        for p in os.listdir("assets/door-close-v2/"):
+        path_to_images = ASSETS_PATH + self.env_name + "/"
+        for p in os.listdir(path_to_images):
             #if os.path.isfile(p) and path in p:
-            img = np.array(Image.open("assets/door-close-v2/" + p))
-            images.append(img)
+            if GOAL_FLAG in p:
+                img = np.array(Image.open(path_to_images + p))
+                images.append(img)
         # embed images
-        images = self.embedding_model.get_image_embedding(np.stack(images, axis=0))
-        return images
+        image_embeddings = self.embedding_model.get_image_embedding(np.stack(images, axis=0))
+        return image_embeddings
     
     def get_current_goal_embedding(self):
         # 3 if there is only one image
