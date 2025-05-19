@@ -118,9 +118,9 @@ class RewardModel:
         goals : dictionary of the respective embedding of each goal image
         maps environment names to depictions
         """
+        self.__dict__.update(kwargs)
         self.embedding_model = embedding_model
         self.goals = self.build_goal_list(goal_path)
-        self.__dict__.update(kwargs)
         self.index = 0
 
     def compute_rewards(
