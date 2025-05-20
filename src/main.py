@@ -10,6 +10,7 @@ import threading
 from PIL import Image
 import numpy as np
 import actor
+import wandb
 
 from embedder import Embedder, RewardModel
 
@@ -42,8 +43,10 @@ parser.add_argument("--model", type=str, default = "CLIP", help="embedding model
 parser.add_argument("--automatic_entropy_tuning", type=bool, default=False, help= "Automatically adjust alpha (default:False)")
 parser.add_argument("--policy", type=str, default="Gaussian", help="Policy type for SAC (Gaussian, Deterministic)")
 parser.add_argument('--tau', type=float, default=0.005, metavar='G', help='target smoothing coefficient(τ) (default: 0.005)')
-
+parser.add_argument("--visualize_every", type=int, default=int(1e5), help="wandb visualization frequency")
 parser.add_argument('--target_update_interval', type=int, default=1, metavar='N', help='Value target update per no. of updates per step (default: 1)')
+
+
 opt = parser.parse_args()
 opt.dvc = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -62,7 +65,12 @@ def main():
     opt.state_dim = env.observation_space.shape[0]
     opt.action_dim = utils.get_action_dim(env)
     #TODO : change this to a normal value
-    opt.max_e_steps = 150
+    #TODO: citation ?
+    opt.max_e_steps = 250
+    run = wandb.init(
+    project="thesis",  # Specify your project
+    config=opt,
+    )
 
     # Seed Everything
     env_seed = opt.seed
@@ -160,22 +168,22 @@ def main():
 
             # Evaluation & logging
             if total_steps % opt.eval_interval == 0:
-                score = evaluate_policy(eval_env, agent, turns=3)
+                avg_env_r, success_rate = evaluate_policy(eval_env, agent, turns=3)
+                wandb.log({"average reward": avg_env_r, "success_rate": success_rate})
                 if opt.write:
-                    writer.add_scalar('ep_r', score, global_step=total_steps)
+                    writer.add_scalar('ep_r', avg_env_r, global_step=total_steps)
                     writer.add_scalar('alpha', agent.alpha, global_step=total_steps)
                     writer.add_scalar('H_mean', agent.H_mean, global_step=total_steps)
                 print(
                     'EnvName:', opt.env_name,
                     'seed:', opt.seed,
-                    f'steps: {int(total_steps/1000)}k',
-                    'score:', int(score)
+                    f'steps: {int(total_steps)}',
+                    'score:', int(avg_env_r)
                 )
 
             total_steps += 1
-            if total_steps % opt.max_e_steps == 0:
-                break
-
+            if total_steps % opt.visualize_every == 0 and total_steps != 0:
+                utils.visualize_episode(agent, env)
             # Save model periodically
             if total_steps % opt.save_interval == 0:
                 agent.save(int(total_steps/1000), opt.env_name)

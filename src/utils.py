@@ -16,6 +16,16 @@ import argparse
 import metaworld
 import random
 import gymnasium as gym
+import wandb
+from PIL import Image, ImageDraw
+import cv2
+import matplotlib.pyplot as plt
+from collections.abc import Iterable, Sized
+import imageio
+
+HAND_LOW = (-0.5,  0.40, 0.05)
+HAND_HIGH = ( 0.5,  1.00, 0.50)
+
 
 
 QUERIES = {
@@ -117,11 +127,12 @@ def get_action_dim(env):
 
 
 
-def evaluate_policy(env, agent, turns = 3):
+def evaluate_policy(env, agent, turns = 10):
 	total_scores = 0
 	for j in range(turns):
 		s, info = env.reset()
 		done = False
+		successes = 0
 		while not done:
 			# Take deterministic actions at test time
 			a = agent.select_action(state=s, deterministic=True)
@@ -129,7 +140,8 @@ def evaluate_policy(env, agent, turns = 3):
 			done = (dw or tr)
 			total_scores += r
 			s = s_next
-	return int(total_scores/turns)
+			successes += dw
+	return int(total_scores/turns), int(successes/turns)
 
 
 #You can just ignore 'str2bool'. Is not related to the RL.
@@ -174,3 +186,173 @@ def compute_rewards(rgb_imgs, goal, model):
 
 def get_goal_path(env_name):
 	return "assets/" + env_name + "-goal"
+
+def visualize_episode(agent, env, reward_model, goal_embedding, n_ep):
+	sim   = env.sim
+	model = sim.model
+	data  = sim.data
+	site_id = model.site_name2id("robot0:gripper_site") # <- assumption that this is the position of the gripper
+	s, _ = env.reset()
+	done = False
+	positions = []
+	depictions = []
+	states = []
+	env_rewards = []
+	object_pos = []
+	target_pos = []
+	while not done:
+		# Take deterministic actions at test time
+		a = agent.select_action(state=s, deterministic=True)
+		depictions.append(env.render())
+
+		eef_pos = data.site_xpos[site_id]   # numpy array of shape (3,)
+		positions.append(eef_pos) # we just want the (x,y) coordinates
+		s_next, r, dw, tr, _ = env.step(a)
+		done = (dw or tr)
+		env_rewards.append(r)
+		states.append(s)
+		object_pos.append(env._get_pos_objects())
+		target_pos.append(env._get_pos_goal())
+		s = s_next
+	states.append(s)
+	subjective_rewards = reward_model.compute_rewards(depictions, goal_embedding)
+	frames = create_episode_video(agent_pos=positions, object_pos=object_pos, target_pos=target_pos, env_rewards=env_rewards, subjective_rewards=subjective_rewards)
+	output_path = "/visualizations/episode" + str(n_ep)
+	write_video_imageio(frames, output_path=output_path)
+
+
+
+
+def create_episode_video(agent_pos, object_pos, goal_pos, corner_1 = HAND_HIGH, corner_2 = HAND_LOW, **kwargs):
+	# get the number of frames
+	length = len(agent_pos)
+	# create each frame
+	frames = []
+	pos_range = (corner_1 - corner_2)[:2] * 500
+
+	# We proceed in 3 steps
+	# 1) engineer the map where the agent is located
+	# 2) create the side pannel where the textual information will be located
+	# 3) concatenate the two together
+	# ====== INGREDIENTS FOR STEP 1 =====
+	videodims = int(pos_range)  # exclude z coordinate, view from above
+	agent_pos[:,:2] *= 500
+	object_pos[:,:2] *= 500
+	goal_pos[:,:2] *= 500
+	# round the coordinates
+	agent_pos = int(agent_pos)
+	object_pos = int(object_pos)
+	goal_pos = int(goal_pos)
+	
+	# associate a color to the z coordinate
+	z_min = HAND_LOW[2]
+	z_max = HAND_HIGH[2]
+	z_range = z_max - z_min
+	agent_z_color = int( (agent_pos[:,:2] / z_range))
+	obj_z_color = int( (object_pos[:,:2] / z_range))
+	goal_z_color = int( (goal_pos[:,:2] / z_range))
+
+	# matplotlib colormap for z coordinates
+	cmap = plt.get_cmap('viridis')
+	nkeys = len(kwargs)
+
+	# separate between arrays of size n, and just pure strings
+	lists = []
+	not_lists = []
+	for k, val in kwargs.item():
+		if isinstance(val, Sized):
+			assert len(val) == length
+			lists.append((k,val))
+		else:
+			not_lists.append((k,val))
+
+	bar = make_colorbar(cv2.COLORMAP_VIRIDIS, width = 20, height = videodims[1],
+					 	vmin=-1.0, vmax=1.0, ticks=7)
+	images = []
+	for i in range(length):
+		blank_map = np.ones((*videodims, 3), dtype = np.uint8)
+		cv2.rectangle(blank_map, (0,0), int(pos_range), (0,0,0), 1)
+		cv2.circle(blank_map, agent_pos[i][:2], radius=2, color=cmap(agent_z_color[i])[:3])
+		cv2.circle(blank_map, object_pos[i][:2], radius=2, color=cmap(obj_z_color[i])[:3])
+		cv2.circle(blank_map, goal_pos[i][:2], radius=2, color=cmap(goal_z_color[i])[:3])
+
+
+		text_pannel_size = (30, videodims[1])
+		text_pannel = np.ones((*text_pannel_size, 3), dtype=np.uint8)
+
+		# first we process strings, then arrays of size n
+
+		count = 0
+
+		for k, val in not_lists:
+			string = "%s: %s" % (k, val)
+			cv2.putText(text_pannel, string, (0, count * text_pannel_size[1]/nkeys))
+			count += 1
+
+		for k, val in lists:
+			# we assume val is always an array containing n values depending on each time step
+			# we also assume that each entry in val is a floating point number
+			s = "%s : %.4f" % (k, val[i])
+			cv2.putText(blank_map, s, (0, count * text_pannel_size / nkeys),
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+			count += 1
+
+		images.append(np.concatenate([blank_map, bar, text_pannel]))
+	return images
+	
+
+	
+
+
+def make_colorbar(cmap=cv2.COLORMAP_JET,
+                  width=30, height=256,
+                  vmin=0, vmax=1.0,
+                  ticks=5, tick_font_scale=0.5):
+    """
+    Returns a colorbar image of shape (height, width, 3) mapping [vmin,vmax]
+    through the specified OpenCV colormap.
+    """
+    # 1) Create a vertical gradient [0..255] as uint8
+    grad = np.linspace(255, 0, height, dtype=np.uint8)[:, None]
+    bar  = np.repeat(grad, width, axis=1)          # shape (H, W)
+    
+    # 2) Apply colormap
+    bar_color = cv2.applyColorMap(bar, cmap)       # shape (H, W, 3)
+    
+    # 3) Add tick labels
+    for i in range(ticks):
+        y = int(i * (height-1) / (ticks-1))
+        val = vmin + (vmax - vmin) * (1 - y/(height-1))
+        txt = f"{val:.2f}"
+        cv2.putText(bar_color, txt, (width+5, y+5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    tick_font_scale, (255,255,255), 1, cv2.LINE_AA)
+    return bar_color
+		
+
+
+
+
+
+def write_video_imageio(frames, output_path, fps=30):
+    """
+    Writes a video using imageio.
+    
+    Parameters:
+    - frames: list of np.ndarray, each with shape (H, W, 3) and dtype uint8 (RGB).
+    - output_path: str, path to save the output video (e.g., 'output.mp4').
+    - fps: int or float, frames per second.
+    """
+    with imageio.get_writer(output_path, fps=fps) as writer:
+        for frame in frames:
+            # If your frames are BGR, convert to RGB for imageio:
+            # frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            writer.append_data(frame)
+    print(f"Video saved to {output_path}")
+
+# Usage:
+# write_video_imageio(frames, 'output_imageio.mp4', fps=24)
+
+
+
+
