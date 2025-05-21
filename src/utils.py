@@ -214,10 +214,8 @@ def visualize_episode(agent, env, reward_model, goal_embedding, n_ep):
 		s = s_next
 	subjective_rewards = reward_model.compute_rewards(depictions, goal_embedding)
 	frames = create_episode_video(agent_pos=positions, object_pos=object_pos, target_pos=target_pos, env_rewards=env_rewards, subjective_rewards=subjective_rewards)
-	output_path = "/visualizations/episode" + str(n_ep)
-	write_video_imageio(frames, output_path=output_path)
-
-
+	video = wandb.Video(data_or_path=frames, caption="Visualization after " + str(n_ep) + " training steps", fps=15, format="mp4")
+	wandb.log({"visualization_" + str(n_ep) : video})
 
 
 def create_episode_video(agent_pos, object_pos, goal_pos, corner_1 = HAND_HIGH, corner_2 = HAND_LOW, **kwargs):
