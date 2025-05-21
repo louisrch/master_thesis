@@ -183,7 +183,7 @@ def main():
 
             total_steps += 1
             if total_steps % opt.visualize_every == 0 and total_steps != 0:
-                utils.visualize_episode(agent, env)
+                utils.visualize_episode(agent, env, reward_model, goal_embedding, total_steps)
             # Save model periodically
             if total_steps % opt.save_interval == 0:
                 agent.save(int(total_steps/1000), opt.env_name)

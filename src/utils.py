@@ -191,12 +191,11 @@ def visualize_episode(agent, env, reward_model, goal_embedding, n_ep):
 	sim   = env.sim
 	model = sim.model
 	data  = sim.data
-	site_id = model.site_name2id("robot0:gripper_site") # <- assumption that this is the position of the gripper
+	site_id = model.site_name2id("robot0:gripper_site") # <- assuming it is the position of the gripper
 	s, _ = env.reset()
 	done = False
 	positions = []
 	depictions = []
-	states = []
 	env_rewards = []
 	object_pos = []
 	target_pos = []
@@ -210,11 +209,9 @@ def visualize_episode(agent, env, reward_model, goal_embedding, n_ep):
 		s_next, r, dw, tr, _ = env.step(a)
 		done = (dw or tr)
 		env_rewards.append(r)
-		states.append(s)
 		object_pos.append(env._get_pos_objects())
 		target_pos.append(env._get_pos_goal())
 		s = s_next
-	states.append(s)
 	subjective_rewards = reward_model.compute_rewards(depictions, goal_embedding)
 	frames = create_episode_video(agent_pos=positions, object_pos=object_pos, target_pos=target_pos, env_rewards=env_rewards, subjective_rewards=subjective_rewards)
 	output_path = "/visualizations/episode" + str(n_ep)
@@ -268,16 +265,27 @@ def create_episode_video(agent_pos, object_pos, goal_pos, corner_1 = HAND_HIGH, 
 
 	bar = make_colorbar(cv2.COLORMAP_VIRIDIS, width = 20, height = videodims[1],
 					 	vmin=-1.0, vmax=1.0, ticks=7)
+	
+	padding_size = (15, videodims[1])
+
+	padding = np.ones((*padding_size, 3), dtype = np.uint8)
+
+		
+
 	images = []
 	for i in range(length):
 		blank_map = np.ones((*videodims, 3), dtype = np.uint8)
 		cv2.rectangle(blank_map, (0,0), int(pos_range), (0,0,0), 1)
 		cv2.circle(blank_map, agent_pos[i][:2], radius=2, color=cmap(agent_z_color[i])[:3])
+		cv2.circle(blank_map, agent_pos[i][:2], radius=1, color=(255,0,0))
+
 		cv2.circle(blank_map, object_pos[i][:2], radius=2, color=cmap(obj_z_color[i])[:3])
+		cv2.circle(blank_map, object_pos[i][:2], radius=1, color=(0,0,255))
+
 		cv2.circle(blank_map, goal_pos[i][:2], radius=2, color=cmap(goal_z_color[i])[:3])
+		cv2.circle(blank_map, goal_pos[i][:2], radius=1, color=(0,255,0))
 
-
-		text_pannel_size = (30, videodims[1])
+		text_pannel_size = (50, videodims[1])
 		text_pannel = np.ones((*text_pannel_size, 3), dtype=np.uint8)
 
 		# first we process strings, then arrays of size n
@@ -297,7 +305,7 @@ def create_episode_video(agent_pos, object_pos, goal_pos, corner_1 = HAND_HIGH, 
             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 			count += 1
 
-		images.append(np.concatenate([blank_map, bar, text_pannel]))
+		images.append(np.concatenate([blank_map, padding, bar, padding, text_pannel], axis=1))
 	return images
 	
 
