@@ -141,7 +141,7 @@ def evaluate_policy(env, agent, turns = 10):
 			total_scores += r
 			s = s_next
 			successes += dw
-	return int(total_scores/turns), int(successes/turns)
+	return int(total_scores/turns), float(successes/turns)
 
 
 #You can just ignore 'str2bool'. Is not related to the RL.
