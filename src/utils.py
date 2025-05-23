@@ -129,10 +129,10 @@ def get_action_dim(env):
 
 def evaluate_policy(env, agent, turns = 10):
 	total_scores = 0
+	successes = 0
 	for j in range(turns):
 		s, info = env.reset()
 		done = False
-		successes = 0
 		while not done:
 			# Take deterministic actions at test time
 			a = agent.select_action(state=s, deterministic=True)
