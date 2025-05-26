@@ -43,7 +43,7 @@ parser.add_argument("--model", type=str, default = "CLIP", help="embedding model
 parser.add_argument("--automatic_entropy_tuning", type=bool, default=False, help= "Automatically adjust alpha (default:False)")
 parser.add_argument("--policy", type=str, default="Gaussian", help="Policy type for SAC (Gaussian, Deterministic)")
 parser.add_argument('--tau', type=float, default=0.005, metavar='G', help='target smoothing coefficient(τ) (default: 0.005)')
-parser.add_argument("--visualize_every", type=int, default=int(1e5), help="wandb visualization frequency")
+parser.add_argument("--visualize_every", type=int, default=20000, help="wandb visualization frequency")
 parser.add_argument('--target_update_interval', type=int, default=1, metavar='N', help='Value target update per no. of updates per step (default: 1)')
 
 
