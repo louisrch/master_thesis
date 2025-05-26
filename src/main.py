@@ -45,7 +45,7 @@ parser.add_argument("--policy", type=str, default="Gaussian", help="Policy type 
 parser.add_argument('--tau', type=float, default=0.005, metavar='G', help='target smoothing coefficient(τ) (default: 0.005)')
 parser.add_argument("--visualize_every", type=int, default=20000, help="wandb visualization frequency")
 parser.add_argument('--target_update_interval', type=int, default=1, metavar='N', help='Value target update per no. of updates per step (default: 1)')
-
+parser.add_argument("--camera_name", type=str, default = "closeUpCam", help = "closeUpCam, gripperPOV")
 
 opt = parser.parse_args()
 opt.dvc = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -60,7 +60,7 @@ DEFAULT_CAMERA_CONFIG = {
 
 def main():
     # Create Env
-    env, eval_env = utils.get_env(env_name=opt.env_name)
+    env, eval_env = utils.get_env(opt)
 
     opt.state_dim = env.observation_space.shape[0]
     opt.action_dim = utils.get_action_dim(env)

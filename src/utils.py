@@ -92,28 +92,30 @@ def get_text_embedding(tokens, model):
 
 
 
-def get_env(env_name):
-    all_envs = gym.envs.registry.keys()
-    env_ids = [env_spec for env_spec in all_envs]
+def get_env(opt):
+	env_name = opt.env_name
+	camera_name = opt.camera_name
+	all_envs = gym.envs.registry.keys()
+	env_ids = [env_spec for env_spec in all_envs]
 
-    if env_name in env_ids:
-        env = gym.make(env_name, render_mode="rgb_array")
-        eval_env = gym.make(env_name)
+	if env_name in env_ids:
+		env = gym.make(env_name, render_mode="rgb_array")
+		eval_env = gym.make(env_name)
 
-    elif env_name in metaworld.ML1.ENV_NAMES:
-        ml1 = metaworld.ML1(env_name)
-        env = ml1.train_classes[env_name](render_mode="rgb_array")
-        task = random.choice(ml1.train_tasks)
-        env.set_task(task)
+	elif env_name in metaworld.ML1.ENV_NAMES:
+		ml1 = metaworld.ML1(env_name)
+		env = ml1.train_classes[env_name](render_mode="rgb_array", camera_name=camera_name)
+		task = random.choice(ml1.train_tasks)
+		env.set_task(task)
 
-        eval_env = ml1.train_classes[env_name](render_mode="rgb_array")
-        task = random.choice(ml1.train_tasks)
-        eval_env.set_task(task)
+		eval_env = ml1.train_classes[env_name](render_mode="rgb_array")
+		task = random.choice(ml1.train_tasks)
+		eval_env.set_task(task)
 
-    else:
-        raise ValueError(f"Unknown environment: {env_name}")
+	else:
+		raise ValueError(f"Unknown environment: {env_name}")
 
-    return env, eval_env
+	return env, eval_env
 
 #TODO get action dimension based on the environment
 def get_action_dim(env):
