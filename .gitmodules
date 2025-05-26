@@ -1,0 +1,3 @@
+[submodule "metaworld"]
+	path = metaworld
+	url = https://github.com/louisrch/Metaworld.git
