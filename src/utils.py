@@ -22,6 +22,7 @@ import cv2
 import matplotlib.pyplot as plt
 from collections.abc import Iterable, Sized
 import imageio
+import os
 
 HAND_LOW = (-0.5,  0.40, 0.05)
 HAND_HIGH = ( 0.5,  1.00, 0.50)
@@ -114,6 +115,9 @@ def get_env(opt):
 
 	else:
 		raise ValueError(f"Unknown environment: {env_name}")
+	
+	# create directory for depictions
+	os.makedirs("assets/" + env_name, exist_ok = True)
 
 	return env, eval_env
 
