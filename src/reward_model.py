@@ -4,7 +4,7 @@ import utils
 import numpy as np
 from PIL import Image
 import os
-import torch.functional as F
+import torch.nn.functional as F
 
 FLAG_DICT = {"visual" : "v",
             "semantic" : "s",
