@@ -67,7 +67,7 @@ class RewardModel:
         path_to_images = ASSETS_PATH + self.env_name + "/"
         flag = FLAG_DICT[self.image_type]
         for p in os.listdir(path_to_images):
-            if p.startswith(flag):
+            if flag in p:
                 img = np.array(Image.open(path_to_images + p))
                 images.append(img)
         # embed images
