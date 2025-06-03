@@ -12,7 +12,9 @@ import numpy as np
 import actor
 import wandb
 
-from embedder import Embedder, RewardModel
+from embedder import Embedder
+
+from reward_model import RewardModel
 
 '''Hyperparameter Setting'''
 parser = argparse.ArgumentParser()
