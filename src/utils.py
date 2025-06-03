@@ -27,6 +27,7 @@ import os
 HAND_LOW = (-0.5,  0.40, 0.05)
 HAND_HIGH = ( 0.5,  1.00, 0.50)
 
+POOLING_OPTIONS = ["average", "max", "sum", "none"]
 
 
 QUERIES = {
@@ -146,7 +147,12 @@ def evaluate_policy(env, agent, turns = 10):
 			done = (dw or tr)
 			total_scores += r
 			s = s_next
-			successes += dw
+			success = info["success"]
+			if success == 1:
+				# if we succeed then we are done
+				successes += 1
+				done = 1
+			
 	return int(total_scores/turns), float(successes/turns)
 
 
@@ -361,6 +367,26 @@ def write_video_imageio(frames, output_path, fps=30):
             # frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             writer.append_data(frame)
     print(f"Video saved to {output_path}")
+
+
+def pool_images(images : torch.tensor, pooling_type : str):
+	if images.ndim == 3:
+		return images
+	pooling_type = str.lower(pooling_type)
+	if pooling_type not in POOLING_OPTIONS:
+		raise NotImplementedError(pooling_type, "is not a valid pooling type. Valid pooling types : ", str(*POOLING_OPTIONS))
+
+	if pooling_type == "mean":
+		return torch.mean(images, dim=0)
+	if pooling_type == "sum":
+		return torch.sum(images, dim=0)
+	if pooling_type == "max":
+		return torch.max(images, dim=0)
+
+	if pooling_type == "none":
+		return images[0]
+	
+	return NotImplementedError(pooling_type, "is a valid pooling type, it has just not been implemented yet")
 
 # Usage:
 # write_video_imageio(frames, 'output_imageio.mp4', fps=24)

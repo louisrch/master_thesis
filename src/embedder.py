@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torch.utils.data import DataLoader
 import os
+import utils
 
 # Predefined mean and std values for normalization
 DINO_MEAN = [0.485, 0.456, 0.406]
@@ -15,7 +16,9 @@ DINO_STD = [0.229, 0.224, 0.225]
 CLIP_MEAN = [0.48145466, 0.4578275, 0.40821073]
 CLIP_STD = [0.26862954, 0.26130258, 0.27577711]
 
-GOAL_FLAG = "goal"
+FLAG_DICT = {"visual" : "v",
+            "semantic" : "s",
+            "oracle" : "oracle"}
 
 ASSETS_PATH = "assets/"
 
@@ -159,13 +162,15 @@ class RewardModel:
         images = []
         #TODO change hardcoding
         path_to_images = ASSETS_PATH + self.env_name + "/"
+        flag = FLAG_DICT[self.image_type]
         for p in os.listdir(path_to_images):
             #if os.path.isfile(p) and path in p:
-            if GOAL_FLAG in p:
+            if p.startswith(flag):
                 img = np.array(Image.open(path_to_images + p))
                 images.append(img)
         # embed images
         image_embeddings = self.embedding_model.get_image_embedding(np.stack(images, axis=0))
+        image_embeddings = utils.pool_images(images=images, pooling_type=self.pooling)
         return image_embeddings
     
     def get_current_goal_embedding(self):
