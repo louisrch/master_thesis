@@ -33,7 +33,7 @@ parser.add_argument('--random_steps', type=int, default=1e3, help='steps for ran
 parser.add_argument('--update_every', type=int, default=100, help='training frequency')
 
 parser.add_argument("--pooling", type=int, default="none", help="pooling type, (average, sum, max, none)")
-parser.add_argument("--image_type", type="str", default="visual", help = "in which ways the image is supposed to be accurate, e.g., visually or semantically (visual, semantic, oracle)")
+parser.add_argument("--image_type", type=str, default="visual", help = "in which ways the image is supposed to be accurate, e.g., visually or semantically (visual, semantic, oracle)")
 parser.add_argument('--gamma', type=float, default=0.99, help='Discounted Factor')
 parser.add_argument('--hid_shape', type=list, default=[1024, 1024], help='Hidden net shape (default : 1024)')
 parser.add_argument("--hidden_depth", type=int, default=2, help="hidden depth of networks")
