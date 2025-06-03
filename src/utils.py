@@ -381,7 +381,7 @@ def pool_images(images : torch.tensor, pooling_type : str):
 	if pooling_type == "sum":
 		return torch.sum(images, dim=0)
 	if pooling_type == "max":
-		return torch.max(images, dim=0)
+		return torch.max(images, dim=0).values()
 
 	if pooling_type == "none":
 		return images[0]
