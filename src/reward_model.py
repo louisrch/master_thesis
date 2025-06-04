@@ -42,7 +42,6 @@ class RewardModel:
         image_embeddings = self.embedding_model.get_image_embedding(images_np)
         distance = self.compute_distance(image_embeddings, goal_embedding)
         r = torch.exp(-distance)
-        print("Mean reward of batch: " + str(r.mean().item()))
         return r
 
     def compute_distance(

@@ -143,6 +143,9 @@ def main():
                 #print(total_steps, rewards.size(), len(depictions))
                 #rewards = 1 - torch.exp(-rewards) # normalization
                 rewards = reward_model.compute_rewards(depictions, goal_embedding)
+                mean_rewards = rewards.mean().item()
+                print("Mean reward of batch: " + str(mean_rewards))
+                wandb.log({"mean subjective reward" : mean_rewards}, step=total_steps)
                 agent.dump_infos_to_replay_buffer(states, actions, rewards, dws)
                 states = [s]
                 actions = []
@@ -183,7 +186,8 @@ def main():
                     'EnvName:', opt.env_name,
                     'seed:', opt.seed,
                     f'steps: {int(total_steps)}',
-                    'score:', int(avg_env_r)
+                    'score:', int(avg_env_r),
+                    'success rate:', float(success_rate)
                 )
 
             total_steps += 1
