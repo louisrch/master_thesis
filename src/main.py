@@ -176,7 +176,7 @@ def main():
 
             # Evaluation & logging
             if total_steps % opt.eval_interval == 0:
-                avg_env_r, success_rate = evaluate_policy(eval_env, agent, turns=10)
+                avg_env_r, success_rate = evaluate_policy(eval_env, agent, episodes=10)
                 wandb.log({"average reward": avg_env_r, "success_rate": success_rate})
                 if opt.write:
                     writer.add_scalar('ep_r', avg_env_r, global_step=total_steps)
