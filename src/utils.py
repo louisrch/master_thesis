@@ -132,27 +132,44 @@ def get_action_dim(env):
         raise NotImplementedError("action space not implemented yet")
 
 
-def evaluate_policy(env, agent, turns = 10):
-	total_scores = 0
-	successes = 0.
-	print("successes before:", successes)
-	for j in range(turns):
-		s, info = env.reset(seed=j)
-		done = False
-		while not done:
-			# Take deterministic actions at test time
-			a = agent.select_action(state=s, deterministic=True)
-			s_next, r, dw, tr, info = env.step(a)
-			done = (dw or tr)
-			total_scores += r
-			s = s_next
-			if info["success"] == 1:
-				# if we succeed then we are done
-				successes += 1
-				done = True
-	print("successes after:", successes)
-			
-	return total_scores/turns, successes/turns
+def evaluate_policy(env, agent, episodes: int = 10):
+    """
+    Runs `episodes` full episodes (or until the success signal is seen)
+    with deterministic actions.
+
+    Returns
+    -------
+    mean_reward : float
+    success_rate : float      # successes / episodes
+    rewards      : list[float]   # per-episode rewards
+    """
+    episode_rewards = []
+    successes = 0
+
+    for _ in range(episodes):
+        obs, _ = env.reset()
+        ep_reward = 0.0
+
+        done = False
+        with torch.no_grad():          # no gradients during evaluation
+            while not done:
+                action = agent.select_action(state=obs, deterministic=True)
+
+                obs, r, terminated, truncated, info = env.step(action)
+                ep_reward += r
+
+                # stop if env says so *or* we hit success
+                if info.get("success", 0) == 1:
+                    successes += 1
+                    done = True          # early-exit on success
+                else:
+                    done = terminated or truncated
+
+        episode_rewards.append(ep_reward)
+
+    mean_reward  = float(np.mean(episode_rewards))
+    success_rate = successes / episodes
+    return mean_reward, success_rate
 
 
 #You can just ignore 'str2bool'. Is not related to the RL.
