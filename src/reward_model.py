@@ -74,7 +74,9 @@ class RewardModel:
                 images.append(img)
         # embed images
         image_embeddings = self.embedding_model.get_image_embedding(np.stack(images, axis=0))
+        print(image_embeddings.size())
         image_embeddings = utils.pool_images(images=image_embeddings, pooling_type=self.pooling)
+        print(image_embeddings.size())
         return image_embeddings
     
     def get_current_goal_embedding(self):
