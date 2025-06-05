@@ -132,11 +132,10 @@ def get_action_dim(env):
         raise NotImplementedError("action space not implemented yet")
 
 
-
-
 def evaluate_policy(env, agent, turns = 10):
 	total_scores = 0
 	successes = 0.
+	print("successes before:", successes)
 	for j in range(turns):
 		s, info = env.reset()
 		done = False
@@ -147,12 +146,11 @@ def evaluate_policy(env, agent, turns = 10):
 			done = (dw or tr)
 			total_scores += r
 			s = s_next
-			success = info["success"]
-			if success == 1:
+			if info["success"] == 1:
 				# if we succeed then we are done
 				successes += 1
 				done = True
-	print("successes:", successes)
+	print("successes after:", successes)
 			
 	return int(total_scores/turns), float(successes/turns)
 
