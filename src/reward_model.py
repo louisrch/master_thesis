@@ -68,7 +68,6 @@ class RewardModel:
         path_to_images = ASSETS_PATH + self.env_name + "/"
         flag = FLAG_DICT[self.image_type]
         for p in os.listdir(path_to_images):
-            print(p)
             if flag in p:
                 img = np.array(Image.open(path_to_images + p))
                 images.append(img)
@@ -80,9 +79,10 @@ class RewardModel:
         return image_embeddings
     
     def get_current_goal_embedding(self):
-        # 3 if there is only one image
-        if self.goals.ndim == 3:
+        # 1 if there is only one image
+        if self.goals.ndim == 1:
             return self.goals
         else:
+            # return the first one
             return self.goals[0]
         
