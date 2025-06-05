@@ -151,7 +151,8 @@ def evaluate_policy(env, agent, turns = 10):
 			if success == 1:
 				# if we succeed then we are done
 				successes += 1
-				done = 1
+				done = True
+	print("successes:", successes)
 			
 	return int(total_scores/turns), float(successes/turns)
 
