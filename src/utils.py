@@ -137,7 +137,7 @@ def evaluate_policy(env, agent, turns = 10):
 	successes = 0.
 	print("successes before:", successes)
 	for j in range(turns):
-		s, info = env.reset()
+		s, info = env.reset(seed=j)
 		done = False
 		while not done:
 			# Take deterministic actions at test time
@@ -152,7 +152,7 @@ def evaluate_policy(env, agent, turns = 10):
 				done = True
 	print("successes after:", successes)
 			
-	return int(total_scores/turns), float(successes/turns)
+	return total_scores/turns, successes/turns
 
 
 #You can just ignore 'str2bool'. Is not related to the RL.
